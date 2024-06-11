@@ -3,10 +3,11 @@ import Joi from "joi";
 export const createAndUpdateDebtValidation = (body) => {
   try {
     const schema = Joi.object({
-        amount: Joi.number().required(),                
-        description: Joi.string().required(),           
-        due_date: Joi.date().required(),                
-        status: Joi.string().valid('new', 'paid', 'cancelled').required()  
+      amount: Joi.number().required(),
+      description: Joi.string().required(),
+      debtor_email: Joi.string().email().required(),
+      due_date: Joi.date().required(),
+      status: Joi.string().valid("new", "paid", "cancelled").required(),
     });
 
     const { error, value } = schema.validate(body);

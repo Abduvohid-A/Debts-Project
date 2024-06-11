@@ -23,13 +23,14 @@ export const createTable = async () => {
             id SERIAL PRIMARY KEY,
             amount DECIMAL(10, 2) NOT NULL,
             description VARCHAR(200) NOT NULL,
+            debtor_email VARCHAR(100) NOT NULL,
             due_date DATE NOT NULL,
             status types NOT NULL
         )`;
 
-    const refreshToken = `CREATE TABLE IF NOT EXISTS refreshToken (
+    const refreshToken = `CREATE TABLE IF NOT EXISTS refreshtoken (
         email VARCHAR(100) NOT NULL,
-        refresh VARCHAR(200) NOT NULL
+        refresh VARCHAR(400) NOT NULL
       )`;
 
     try {

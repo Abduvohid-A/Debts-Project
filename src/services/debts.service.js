@@ -3,8 +3,14 @@ import pool from "../config/database.js";
 export const createDebtService = async (debt) => {
   try {
     const result = await pool.query(
-      `INSERT INTO debts (amount, description, due_date, status) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [debt.amount, debt.description, debt.due_date, debt.status]
+      `INSERT INTO debts (amount, description, debtor_email, due_date, status) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [
+        debt.amount,
+        debt.description,
+        debt.debtor_email,
+        debt.due_date,
+        debt.status,
+      ]
     );
 
     if (!result) {
@@ -21,85 +27,66 @@ export const createDebtService = async (debt) => {
   }
 };
 
-export const getAllDebtsService = async (user) => {
+export const getAllDebtsService = async (email) => {
   try {
-    if (user.role !== "user") {
-      return { status: 400, message: "Bad request", values: "" };
+    console.log(email);
+    const result = await pool.query(
+      "SELECT * FROM debts WHERE debtor_email = $1",
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return {
+        status: 404,
+        message: "No debts found",
+        values: "",
+      };
     }
 
-    const result = await pool.query("SELECT * FROM debts WHERE email = $1", [
-      user.email,
-    ]);
-
-    return { status: 200, message: "", values: result };
+    return {
+      status: 200,
+      message: "",
+      values: result.rows,
+    };
   } catch (error) {
     console.error(error);
-    return { status: 400, message: "Bad request", values: "" };
+    return { status: 500, message: "Internal server error", values: "" };
   }
 };
 
-export const updateDebtService = async (user) => {
+export const updateDebtService = async (id, value) => {
   try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      user.email,
-    ]);
+    const result = await pool.query("SELECT * FROM debts WHERE id = $1", [id]);
 
-    const otpResult = await pool.query(
-      "SELECT otp FROM otps WHERE email = $1",
-      [user.email]
+    if (result.rows.length !== 1) {
+      return { status: 404, message: "Not Found" };
+    }
+
+    const debt = result.rows[0];
+    const { amount, description, debtor_email, due_date, status } = value;
+
+    await pool.query(
+      `UPDATE debts SET amount = $1, description = $2, debtor_email = $3, due_date = $4, status = $5 where id = $6`,
+      [amount, description, debtor_email, due_date, status, debt.id]
     );
-    const otp = otpResult.rows.length > 0 ? otpResult.rows[0].otp : null;
 
-    if (result.rows.length === 0 || otp === null) {
-      return { status: 400, message: "User not found" };
-    }
-
-    if (otp !== user.otp) {
-      return { status: 400, message: "Incorrect OTP" };
-    }
-
-    await pool.query("UPDATE users SET status = $1 WHERE email = $2", [
-      true,
-      user.email,
-    ]);
-
-    await pool.query("DELETE FROM otps WHERE email = $1", [user.email]);
-
-    return { status: 200, message: "Correct One Time Password" };
+    return { status: 200, message: "successfully updated" };
   } catch (error) {
     console.error(error);
     return { status: 500, message: "Internal server error" };
   }
 };
 
-export const deleteDebtService = async (user) => {
+export const deleteDebtService = async (id) => {
   try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      user.email,
-    ]);
+    const debt = await pool.query(`SELECT * FROM debts WHERE id = $1`, [id]);
 
-    const otpResult = await pool.query(
-      "SELECT otp FROM otps WHERE email = $1",
-      [user.email]
-    );
-    const otp = otpResult.rows.length > 0 ? otpResult.rows[0].otp : null;
-
-    if (result.rows.length === 0 || otp === null) {
-      return { status: 400, message: "User not found" };
+    if (debt.rows.length !== 1) {
+      return { status: 404, message: "Not Found" };
     }
+    await pool.query("DELETE FROM debts WHERE id = $1", [id]);
 
-    if (otp !== user.otp) {
-      return { status: 400, message: "Incorrect OTP" };
-    }
-
-    await pool.query("UPDATE users SET status = $1 WHERE email = $2", [
-      true,
-      user.email,
-    ]);
-
-    await pool.query("DELETE FROM otps WHERE email = $1", [user.email]);
-
-    return { status: 200, message: "Correct One Time Password" };
+    return { status: 200, message: "SECCESSFULLY DELETED" };
   } catch (error) {
     console.error(error);
     return { status: 500, message: "Internal server error" };

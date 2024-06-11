@@ -94,13 +94,18 @@ export const loginService = async (user) => {
       user.email,
     ]);
 
-    if (!result.rows.length === 1) {
+    if (result.rows.length !== 1) {
       return { status: 400, message: "Invalid Email", token: "" };
     }
 
-    const decode = await bcrypt.compare(user.password, result.rows[0].password);
+    const userRecord = result.rows[0];
 
-    if (!decode) {
+    const isPasswordValid = await bcrypt.compare(
+      user.password,
+      userRecord.password
+    );
+
+    if (!isPasswordValid) {
       return { status: 400, message: "Invalid Password", token: "" };
     }
 
@@ -109,34 +114,49 @@ export const loginService = async (user) => {
 
     const accessToken = createToken(
       {
-        email: result.rows[0].email,
-        role: result.rows[0].role,
+        email: userRecord.email,
+        role: userRecord.role,
       },
       ACCESS_KEY,
       { expiresIn: ACCESS_TIME }
     );
     const refreshToken = createToken(
       {
-        email: result.rows[0].email,
-        role: result.rows[0].role,
+        email: userRecord.email,
+        role: userRecord.role,
       },
       REFRESH_KEY,
       { expiresIn: REFRESH_TIME }
     );
 
     if (!accessToken || !refreshToken) {
-      return { status: 400, message: "Token Failed", token: "" };
+      return { status: 400, message: "Token Creation Failed", token: "" };
     }
 
-    await pool.query(
-      `INSERT INTO refreshToken (email, refresh) VALUES ($1, $2)`,
-      [result.rows[0].email, refreshToken]
+    const existRefresh = await pool.query(
+      `SELECT * FROM refreshtoken WHERE email = $1`,
+      [userRecord.email]
     );
 
-    return { status: 200, message: "", token: { accessToken, refreshToken } };
+    if (existRefresh) {
+      await pool.query(
+        `UPDATE refreshtoken SET refresh = $1 WHERE email = $2`,
+        [refreshToken, userRecord.email]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO refreshtoken (email, refresh) VALUES ($1, $2)`,
+        [userRecord.email, refreshToken]
+      );
+    }
+
+    return {
+      status: 200,
+      message: "Login successful",
+      token: { accessToken, refreshToken },
+    };
   } catch (error) {
     console.log(error);
-
     return { status: 500, message: "Internal server error", token: "" };
   }
 };
