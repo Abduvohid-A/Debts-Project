@@ -7,9 +7,11 @@ import { createAndUpdateUserValidation } from "../validations/users.validation.j
 
 export const getAllUsersController = async (req, res) => {
   try {
-    const { status, message } = await getAllUsersService();
+    const { status, message, values } = await getAllUsersService();
 
-    res.status(status).send(message);
+    if (values) return res.status(status).json(values);
+
+    return res.status(status).send(message);
   } catch (error) {
     console.log(error);
 
@@ -20,13 +22,14 @@ export const getAllUsersController = async (req, res) => {
 export const updateUserController = async (req, res) => {
   try {
     const { body } = req;
+    const { id } = req.params;
 
     const { ok, statuss, messages, value } =
       await createAndUpdateUserValidation(body);
 
     if (!ok) return res.status(statuss).send(messages);
 
-    const { status, message } = await updateUserService(value);
+    const { status, message } = await updateUserService(id, value);
 
     res.status(status).send(message);
   } catch (error) {
@@ -38,9 +41,9 @@ export const updateUserController = async (req, res) => {
 
 export const deleteUserController = async (req, res) => {
   try {
-    const { body } = req;
+    const { id } = req.params;
 
-    const { status, message } = await deleteUserService(value);
+    const { status, message } = await deleteUserService(id);
 
     res.status(status).send(message);
   } catch (error) {
