@@ -11,7 +11,7 @@ export const createDebtController = async (req, res) => {
     const { body } = req;
 
     const { ok, statuss, messages, value } =
-      await createAndUpdateDebtValidation(body);
+      createAndUpdateDebtValidation(body);
 
     if (!ok) return res.status(statuss).send(messages);
 

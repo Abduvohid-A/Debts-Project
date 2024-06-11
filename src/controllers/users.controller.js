@@ -54,9 +54,10 @@ export const loginController = async (req, res) => {
 
     if (!ok) return res.status(statuss).send(messages);
 
-    const { status, message } = await loginService(value);
+    const { status, message, token } = await loginService(value);
 
-    res.status(status).send(message);
+    if (!token) return res.status(status).send(message);
+    else return res.status(status).json({ token });
   } catch (error) {
     console.log(error);
 

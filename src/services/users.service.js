@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import pool from "../config/database.js";
 import configuration from "../config/configuration.js";
 import { sendOtp } from "../utils/nodemailer.js";
+import { createToken } from "../utils/jsonwebtoken.js";
 
 export const registerService = async (user) => {
   try {
@@ -31,9 +32,14 @@ export const registerService = async (user) => {
       Number(BCRYPT_SALT)
     );
 
-    const insert = `INSERT INTO users (username, email, password) VALUES ($1, $2, $3)`;
+    const insert = `INSERT INTO users (username, email, password, role ) VALUES ($1, $2, $3, $4)`;
 
-    await pool.query(insert, [user.username, user.email, hashedPassword]);
+    await pool.query(insert, [
+      user.username,
+      user.email,
+      hashedPassword,
+      user.role,
+    ]);
 
     await pool.query(`INSERT INTO otps (email, otp) values ($1, $2)`, [
       user.email,
@@ -89,25 +95,48 @@ export const loginService = async (user) => {
     ]);
 
     if (!result.rows.length === 1) {
-      return { status: 400, message: "Invalid Email" };
+      return { status: 400, message: "Invalid Email", token: "" };
     }
 
-    const { BCRYPT_SALT } = configuration.jwt;
-
-    const decode = await bcrypt.verify(user.password, result.rows[0].password);
+    const decode = await bcrypt.compare(user.password, result.rows[0].password);
 
     if (!decode) {
-      return { status: 400, message: "Invalid Password" };
+      return { status: 400, message: "Invalid Password", token: "" };
     }
 
-    const insert = `INSERT INTO users (username, email, password) VALUES ($1, $2, $3)`;
+    const { ACCESS_KEY, ACCESS_TIME, REFRESH_KEY, REFRESH_TIME } =
+      configuration.jwt;
 
-    await pool.query(insert, [user.username, user.email, hashedPassword]);
+    const accessToken = createToken(
+      {
+        email: result.rows[0].email,
+        role: result.rows[0].role,
+      },
+      ACCESS_KEY,
+      { expiresIn: ACCESS_TIME }
+    );
+    const refreshToken = createToken(
+      {
+        email: result.rows[0].email,
+        role: result.rows[0].role,
+      },
+      REFRESH_KEY,
+      { expiresIn: REFRESH_TIME }
+    );
 
-    return { status: 201, message: "User successfully created" };
+    if (!accessToken || !refreshToken) {
+      return { status: 400, message: "Token Failed", token: "" };
+    }
+
+    await pool.query(
+      `INSERT INTO refreshToken (email, refresh) VALUES ($1, $2)`,
+      [result.rows[0].email, refreshToken]
+    );
+
+    return { status: 200, message: "", token: { accessToken, refreshToken } };
   } catch (error) {
     console.log(error);
 
-    return { status: 500, message: "Internal server error" };
+    return { status: 500, message: "Internal server error", token: "" };
   }
 };

@@ -23,12 +23,14 @@ export const createTable = async () => {
             id SERIAL PRIMARY KEY,
             amount DECIMAL(10, 2) NOT NULL,
             description VARCHAR(200) NOT NULL,
-            debtor_email VARCHAR(100) UNIQUE NOT NULL,
             due_date DATE NOT NULL,
-            status types NOT NULL,
-            FOREIGN KEY (debtor_email) REFERENCES users(email)
-            ON DELETE NO ACTION ON UPDATE NO ACTION
+            status types NOT NULL
         )`;
+
+    const refreshToken = `CREATE TABLE IF NOT EXISTS refreshToken (
+        email VARCHAR(100) NOT NULL,
+        refresh VARCHAR(200) NOT NULL
+      )`;
 
     try {
       await pool.query(type);
@@ -49,6 +51,7 @@ export const createTable = async () => {
     }
 
     await pool.query(users);
+    await pool.query(refreshToken);
     await pool.query(otp);
     await pool.query(debts);
   } catch (error) {
