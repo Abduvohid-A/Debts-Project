@@ -1,7 +1,10 @@
-createDebtController,
-  getAllDebtsController,
-  updateDebtController,
-  deleteDebtController;
+import {
+  createDebtService,
+  getAllDebtsService,
+  updateDebtService,
+  deleteDebtService,
+} from "../services/debts.service.js";
+import { createAndUpdateDebtValidation } from "../validations/debt.validation.js";
 
 export const createDebtController = async (req, res) => {
   try {
@@ -24,7 +27,7 @@ export const createDebtController = async (req, res) => {
 
 export const getAllDebtsController = async (req, res) => {
   try {
-    const { status, message } = await registerService(value);
+    const { status, message } = await getAllDebtsService(value);
 
     res.status(status).send(message);
   } catch (error) {
@@ -37,13 +40,14 @@ export const getAllDebtsController = async (req, res) => {
 export const updateDebtController = async (req, res) => {
   try {
     const { body } = req;
+    const { id } = req.params;
 
     const { ok, statuss, messages, value } =
-      await createAndUpdateUserValidation(body);
+      await createAndUpdateDebtValidation(body);
 
     if (!ok) return res.status(statuss).send(messages);
 
-    const { status, message } = await registerService(value);
+    const { status, message } = await updateDebtService(id, value);
 
     res.status(status).send(message);
   } catch (error) {
@@ -57,12 +61,7 @@ export const deleteDebtController = async (req, res) => {
   try {
     const { body } = req;
 
-    const { ok, statuss, messages, value } =
-      await createAndUpdateUserValidation(body);
-
-    if (!ok) return res.status(statuss).send(messages);
-
-    const { status, message } = await registerService(value);
+    const { status, message } = await deleteDebtService(value);
 
     res.status(status).send(message);
   } catch (error) {
