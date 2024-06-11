@@ -15,7 +15,7 @@ export const createTable = async () => {
             otp VARCHAR(100) NOT NULL,
             FOREIGN KEY (email) REFERENCES users(email) 
             ON DELETE CASCADE 
-            ON UPDATE CASCADE
+            ON UPDATE NO ACTION
         )`;
 
     const type = `CREATE TYPE types AS ENUM ('new', 'paid', 'cancelled')`;

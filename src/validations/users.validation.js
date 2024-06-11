@@ -58,7 +58,7 @@ export const otpValidation = async (body) => {
 
     return {
       ok: true,
-      statuss: 201,
+      statuss: 200,
       messages: "",
       value,
     };

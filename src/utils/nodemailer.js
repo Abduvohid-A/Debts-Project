@@ -1,22 +1,32 @@
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
+import configuration from "../config/configuration.js";
+
+const { NODEMAILER_PORT, NODEMAILER_EMAIL, NODEMAILER_PASS } =
+  configuration.nodemailer;
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.email.gmail",
-  port: 587,
-  secure: true, 
+  host: "smtp.gmail.com",
+  port: NODEMAILER_PORT,
+  secure: NODEMAILER_PORT === 465,
   auth: {
-    user: "maddison53@ethereal.email",
-    pass: "jn7jnAPss4f63QBp6D",
+    user: NODEMAILER_EMAIL,
+    pass: NODEMAILER_PASS,
   },
 });
 
-
 export async function sendOtp(email, otp) {
+  try {
+    const info = await transporter.sendMail({
+      from: NODEMAILER_EMAIL,
+      to: email,
+      subject: "Verification",
+      text: "",
+      html: `<h1>Your One Time Password <br> ${otp}</h1>`,
+    });
+    return true;
+  } catch (error) {
+    console.log(error);
 
-  const info = await transporter.sendMail({
-    to: email, 
-    subject: "Verification", 
-    text: "", 
-    html: `<h1>Your One Time Password <br> ${otp}</h1>`
-  });
-};
+    return false;
+  }
+}

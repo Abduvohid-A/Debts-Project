@@ -23,7 +23,7 @@ const pool = new Pool({
 export const connectPostgres = async () => {
     try {
         const client = await pool.connect();
-        console.log(`Postgres connected on host: ${client.host}`);
+        console.log(`Postgres connected on host : ${client.host}`);
         client.release(); 
     } catch (error) {
         console.error("Postgres connection error:", error);
