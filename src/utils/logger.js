@@ -21,6 +21,6 @@ export const logger = createLogger({
             options: { useUnifiedTopology: true }
         })
     ],
-    exceptionHandlers:[new transports.File({filename:"logs/exceptions.log"})],
-    rejectionHandlers: [new transports.File({ filename: "logs/rejections.log" })],
+    exceptionHandlers:[new transports.File({filename:"src/logs/exceptions.log"})],
+    rejectionHandlers: [new transports.File({ filename: "src/logs/rejections.log" })],
 })
