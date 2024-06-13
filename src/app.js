@@ -15,4 +15,12 @@ app.use(logMiddleware);
 
 app.use("/api", mainRouter);
 
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  shutdown();
+});
 
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception thrown:", err);
+  shutdown();
+});
